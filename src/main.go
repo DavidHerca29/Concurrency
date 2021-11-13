@@ -36,10 +36,9 @@ type stats struct {
 }
 
 const (
-	BAR_WIDTH       = 1
-	FONT_WIDTH      = 8
-	FONT_HEIGHT     = 15
-	MAX_NUMBER_SIZE = 32
+	BAR_WIDTH   = 1
+	FONT_WIDTH  = 8
+	FONT_HEIGHT = 15
 )
 
 var (
@@ -73,8 +72,6 @@ func main() {
 	*/
 	baseSlice := make([]float64, 100)
 	baseSlice = generarEnteroCLM(size, time.Now().UnixMilli()%600) // enviamos un entero entre 0-599
-	//baseSlice = []float64{9, 6, 23,3,4, 4, 7, 12, 15, 22, 17}
-	fmt.Println(baseSlice)
 	initBubblesChart(baseSlice)
 	initHeapsChart(baseSlice)
 	initInsertionsChart(baseSlice)
@@ -104,67 +101,26 @@ func swap(a *float64, b *float64) {
 }
 
 /*
-Aux function to remove an element from a slice
-*/
-func remove(slice [][]int, index int) [][]int {
-	return append(slice[:index], slice[index+1:]...)
-}
-
-/*func partition(slice []float64, start int, end int, pair chan []int) int {
-	// CÓDIGO OMITIDO
-	for i := start; i < end; i++{
-		// CÓDIGO OMITIDO
-		if slice[i] <= pivot{
-			pair <- []int{i,index}
-			// CÓDIGO OMITIDO
-		}
-	}
-	pair <- []int{index,end}
-	// CÓDIGO OMITIDO
-	return index
-}*/
-
-/*
-Iterative quicksort
-*/ /*
-func quickSort(slice []float64, size int, pair chan []int) {
-	// CÓDIGO OMITIDO
-	for len(stack) > 0{
-		// CÓDIGO OMITIDO
-		pivot := partition(slice, start, end, pair)
-		// CÓDIGO OMITIDO
-		if pivot-1 > start {
-			stack = append(stack, []int{start,pivot-1})
-		}
-		// CÓDIGO OMITIDO
-		if pivot+1 < end {
-			stack = append(stack, []int{pivot+1,end})
-		}
-		// CÓDIGO OMITIDO
-	}
-	close(pair)
-	// CÓDIGO OMITIDO
-}
-*/
-/*
 Bubblesort graphic drawer
 */
 func bsChartDrawer(slice []float64) {
 	bubblesChart.Data = make([]float64, len(slice))
 	copy(bubblesChart.Data, slice)
+	copySlice := make([]float64, len(slice))
+	copy(copySlice, slice)
 	pairsChannel := make(chan []int, 2000)
-	go callBubble(&slice, &bubbleStats, pairsChannel)
+	go callBubble(&copySlice, pairsChannel)
 	for pair := range pairsChannel {
 		swap(&bubblesChart.Data[pair[0]], &bubblesChart.Data[pair[1]])
 		m.Lock()
 		ui.Render(&bubblesChart)
 		m.Unlock()
 	}
-	bubblesChart.Title = "BubbleSort-Finalizado-" /*+
-	"Tiempo:"+strconv.FormatInt(bsTime.Milliseconds(),10)+"ms-" +
-	"Swaps:"+strconv.Itoa(bsSwaps)+"-" +
-	"Comparaciones:"+strconv.Itoa(bsComparisons)+"-"+
-	"Iteraciones:"+strconv.Itoa(bsIterations)*/
+	bubblesChart.Title = "BubbleSort-Finalizado-" +
+		"Tiempo:" + strconv.FormatInt(bubbleStats.tiempo.Milliseconds(), 10) + "ms-" +
+		"Swaps:" + strconv.Itoa(bubbleStats.intercambios) + "-" +
+		"Comparaciones:" + strconv.Itoa(bubbleStats.comparaciones) + "-" +
+		"Iteraciones:" + strconv.Itoa(bubbleStats.evaluaciones)
 	m.Lock()
 	ui.Render(&bubblesChart)
 	m.Unlock()
@@ -179,103 +135,105 @@ func quicksChartDrawer(slice []float64) {
 	copySlice := make([]float64, len(slice))
 	copy(copySlice, slice)
 	pairsChannel := make(chan []int)
-	go quickSortIterative(&copySlice, 0, len(copySlice)-1, pairsChannel)
+	go callQuickSort(&copySlice, pairsChannel)
 	for pair := range pairsChannel {
 		swap(&quicksChart.Data[pair[0]], &quicksChart.Data[pair[1]])
 		m.Lock()
 		ui.Render(&quicksChart)
 		m.Unlock()
 	}
-	quicksChart.Title = "QuickSort-Finalizado-" /*+
-	"Tiempo:"+strconv.FormatInt(qsTime.Milliseconds(),10)+"ms-" +
-	"Swaps:"+strconv.Itoa(qsSwaps)+"-" +
-	"Comparaciones:"+strconv.Itoa(qsComparisons)+"-"+
-	"Iteraciones:"+strconv.Itoa(qsIterations)*/
+	quicksChart.Title = "QuickSort-Finalizado-" +
+		"Tiempo:" + strconv.FormatInt(quickSortStats.tiempo.Milliseconds(), 10) + "ms-" +
+		"Swaps:" + strconv.Itoa(quickSortStats.intercambios) + "-" +
+		"Comparaciones:" + strconv.Itoa(quickSortStats.comparaciones) + "-" +
+		"Iteraciones:" + strconv.Itoa(quickSortStats.evaluaciones)
 	m.Lock()
 	ui.Render(&quicksChart)
 	m.Unlock()
 }
+
+/*
+Insertion graphic drawer
+*/
 func insertionsChartDrawer(slice []float64) {
 	insertionsChart.Data = make([]float64, len(slice))
 	copy(insertionsChart.Data, slice)
 	copySlice := make([]float64, len(slice))
 	copy(copySlice, slice)
 	pairsChannel := make(chan IndexValue, 2000)
-	go insertion(copySlice, pairsChannel)
+	go callInsertion(&copySlice, pairsChannel)
 	for pair := range pairsChannel {
 		insertionsChart.Data[pair.index] = float64(pair.value)
-		//swap(&, &insertionsChart.Data[pair.index])
 		m.Lock()
 		ui.Render(&insertionsChart)
 		m.Unlock()
 	}
-	insertionsChart.Title = "InsertionSort-Finalizado-" /* +
-	"Tiempo:"+strconv.FormatInt(qsTime.Milliseconds(),10)+"ms-" +
-	"Swaps:"+strconv.Itoa(qsSwaps)+"-" +
-	"Comparaciones:"+strconv.Itoa(qsComparisons)+"-"+
-	"Iteraciones:"+strconv.Itoa(qsIterations)*/
+	insertionsChart.Title = "InsertionSort-Finalizado-" +
+		"Tiempo:" + strconv.FormatInt(insertionSortStats.tiempo.Milliseconds(), 10) + "ms-" +
+		"Swaps:" + strconv.Itoa(insertionSortStats.intercambios) + "-" +
+		"Comparaciones:" + strconv.Itoa(insertionSortStats.comparaciones) + "-" +
+		"Iteraciones:" + strconv.Itoa(insertionSortStats.evaluaciones)
 	m.Lock()
 	ui.Render(&insertionsChart)
 	m.Unlock()
 }
+
+/*
+Selection graphic drawer
+*/
 func selectionsChartDrawer(slice []float64) {
 	selectionChart.Data = make([]float64, len(slice))
 	copy(selectionChart.Data, slice)
 	copySlice := make([]float64, len(slice))
 	copy(copySlice, slice)
 	selChannel := make(chan []int)
-	go selection(copySlice, selChannel)
+	go callSelection(&copySlice, selChannel)
 	for pair := range selChannel {
 		swap(&selectionChart.Data[pair[0]], &selectionChart.Data[pair[1]])
 		m.Lock()
 		ui.Render(&selectionChart)
 		m.Unlock()
 	}
-	selectionChart.Title = "SelectionSort-Finalizado-" /* +
-	"Tiempo:"+strconv.FormatInt(qsTime.Milliseconds(),10)+"ms-" +
-	"Swaps:"+strconv.Itoa(qsSwaps)+"-" +
-	"Comparaciones:"+strconv.Itoa(qsComparisons)+"-"+
-	"Iteraciones:"+strconv.Itoa(qsIterations)*/
+	selectionChart.Title = "SelectionSort-Finalizado-" +
+		"Tiempo:" + strconv.FormatInt(selectionSortStats.tiempo.Milliseconds(), 10) + "ms-" +
+		"Swaps:" + strconv.Itoa(selectionSortStats.intercambios) + "-" +
+		"Comparaciones:" + strconv.Itoa(selectionSortStats.comparaciones) + "-" +
+		"Iteraciones:" + strconv.Itoa(selectionSortStats.evaluaciones)
 	m.Lock()
 	ui.Render(&selectionChart)
 	m.Unlock()
 }
+
+/*
+Heap sort graphic drawer
+*/
 func heapsChartDrawer(slice []float64) {
 	heapsChart.Data = make([]float64, len(slice))
 	copy(heapsChart.Data, slice)
 	copySlice := make([]float64, len(slice))
 	copy(copySlice, slice)
 	pairsChannel := make(chan []int, 2000)
-	go heapsort(&copySlice, &HeapSortStats, pairsChannel)
+	go callHeapSort(&copySlice, pairsChannel)
 	for pair := range pairsChannel {
 		swap(&heapsChart.Data[pair[0]], &heapsChart.Data[pair[1]])
 		m.Lock()
 		ui.Render(&heapsChart)
 		m.Unlock()
 	}
-	heapsChart.Title = "HeapSort-Finalizado-" /* +
-	"Tiempo:"+strconv.FormatInt(qsTime.Milliseconds(),10)+"ms-" +
-	"Swaps:"+strconv.Itoa(qsSwaps)+"-" +
-	"Comparaciones:"+strconv.Itoa(qsComparisons)+"-"+
-	"Iteraciones:"+strconv.Itoa(qsIterations)*/
+	heapsChart.Title = "HeapSort-Finalizado-" +
+		"Tiempo:" + strconv.FormatInt(HeapSortStats.tiempo.Milliseconds(), 10) + "ms-" +
+		"Swaps:" + strconv.Itoa(HeapSortStats.intercambios) + "-" +
+		"Comparaciones:" + strconv.Itoa(HeapSortStats.comparaciones) + "-" +
+		"Iteraciones:" + strconv.Itoa(HeapSortStats.evaluaciones)
 	m.Lock()
 	ui.Render(&heapsChart)
 	m.Unlock()
 }
-func generateLabels(slice []float64) []string {
-	var labels = make([]string, len(slice))
-	for i := range slice {
-		labels[i] = strconv.Itoa(i)
-	}
-	return labels
-}
 
+// INSTANCIAMOS LOS CHARTS
 func initBubblesChart(slice []float64) {
 	bubblesChart = *widgets.NewBarChart()
 	bubblesChart.Data = slice
-	fmt.Println(bubblesChart.Data)
-	var s int
-	fmt.Scanln(&s)
 	bubblesChart.Title = "BubbleSort"
 	bubblesChart.SetRect(0, 0, width/2-1, height/3-3)
 	bubblesChart.BarWidth = BAR_WIDTH
@@ -284,7 +242,7 @@ func initBubblesChart(slice []float64) {
 	bubblesChart.LabelStyles = []ui.Style{ui.NewStyle(ui.ColorWhite)}
 	bubblesChart.BorderBottom = true
 	bubblesChart.BarColors = []ui.Color{ui.ColorRed}
-	bubblesChart.NumStyles = []ui.Style{ui.NewStyle(ui.ColorBlack)}
+	bubblesChart.NumStyles = []ui.Style{ui.NewStyle(ui.ColorRed)}
 }
 func initInsertionsChart(slice []float64) {
 	insertionsChart = *widgets.NewBarChart()
@@ -297,7 +255,7 @@ func initInsertionsChart(slice []float64) {
 	insertionsChart.LabelStyles = []ui.Style{ui.NewStyle(ui.ColorWhite)}
 	insertionsChart.BorderBottom = true
 	insertionsChart.BarColors = []ui.Color{ui.ColorCyan}
-	insertionsChart.NumStyles = []ui.Style{ui.NewStyle(ui.ColorBlack)}
+	insertionsChart.NumStyles = []ui.Style{ui.NewStyle(ui.ColorCyan)}
 }
 
 func initQuicksChart(slice []float64) {
@@ -307,10 +265,9 @@ func initQuicksChart(slice []float64) {
 	quicksChart.SetRect(width/2+1, 0, width-3, height/3-3)
 	quicksChart.BarWidth = BAR_WIDTH
 	quicksChart.BarGap = 0
-	//quicksChart.Labels = generateLabels(slice)
 	quicksChart.LabelStyles = []ui.Style{ui.NewStyle(ui.ColorWhite)}
 	quicksChart.BarColors = []ui.Color{ui.ColorBlue}
-	quicksChart.NumStyles = []ui.Style{ui.NewStyle(ui.ColorBlack)}
+	quicksChart.NumStyles = []ui.Style{ui.NewStyle(ui.ColorBlue)}
 }
 func initHeapsChart(slice []float64) {
 	heapsChart = *widgets.NewBarChart()
@@ -319,11 +276,10 @@ func initHeapsChart(slice []float64) {
 	heapsChart.SetRect(width/2+1, height/3-3, width-3, height/3*2-4)
 	heapsChart.BarWidth = BAR_WIDTH
 	heapsChart.BarGap = 0
-	//heapsChart.Labels = generateLabels(slice)
 	heapsChart.LabelStyles = []ui.Style{ui.NewStyle(ui.ColorWhite)}
 	heapsChart.BorderBottom = true
 	heapsChart.BarColors = []ui.Color{ui.ColorGreen}
-	heapsChart.NumStyles = []ui.Style{ui.NewStyle(ui.ColorBlack)}
+	heapsChart.NumStyles = []ui.Style{ui.NewStyle(ui.ColorGreen)}
 }
 func initSelectionsChart(slice []float64) {
 	selectionChart = *widgets.NewBarChart()
@@ -332,11 +288,10 @@ func initSelectionsChart(slice []float64) {
 	selectionChart.SetRect(0, (height/3*2)-4, width-3, height-9)
 	selectionChart.BarWidth = BAR_WIDTH
 	selectionChart.BarGap = 0
-	//selectionChart.Labels = generateLabels(slice)
 	selectionChart.LabelStyles = []ui.Style{ui.NewStyle(ui.ColorWhite)}
 	selectionChart.BorderBottom = true
 	selectionChart.BarColors = []ui.Color{ui.ColorYellow}
-	selectionChart.NumStyles = []ui.Style{ui.NewStyle(ui.ColorBlack)}
+	selectionChart.NumStyles = []ui.Style{ui.NewStyle(ui.ColorYellow)}
 }
 
 // METODOS DE ORDENAMIENTO
@@ -365,95 +320,71 @@ func insertion(lista []float64, channel chan IndexValue) {
 		insertionSortStats.intercambios++
 		lista[j+1] = llave // Intercambiar el elemento mínimo encontrado con el primer elemento
 	}
-	close(channel)
 }
-func heap(lista []float64, n int, i int, s *stats, channel chan []int) {
+func heap(lista []float64, n int, i int, channel chan []int) {
 
 	largest := i
 	l := 2*i + 1
 	r := 2*i + 2
 
-	s.comparaciones++
+	HeapSortStats.comparaciones++
 	if l < n && lista[largest] < lista[l] {
-		s.comparaciones++
+		HeapSortStats.comparaciones++
 		largest = l
 	}
-	s.comparaciones++
+	HeapSortStats.comparaciones++
 	if r < n && lista[largest] < lista[r] {
-		s.comparaciones++
+		HeapSortStats.comparaciones++
 		largest = r
 	}
-	s.comparaciones++
+	HeapSortStats.comparaciones++
 	if largest != i {
-		s.intercambios += 2
+		HeapSortStats.intercambios += 2
 		channel <- []int{largest, i}
-		/*channel <- IndexValue{
-			index: i,
-			value: int(lista[largest]),
-		}
-		channel <- IndexValue{
-			index: largest,
-			value: int(lista[i]),
-		}*/
 		lista[i], lista[largest] = lista[largest], lista[i]
-		heap(lista, n, largest, s, channel)
+		heap(lista, n, largest, channel)
 	}
 
 }
 
-func heapsort(list *[]float64, s *stats, channel chan []int) {
+func heapsort(list *[]float64, channel chan []int) {
 	lista := *list
 	largo := len(lista)
 	for i := largo/2 - 1; i >= 0; i-- {
-		s.evaluaciones++
-		s.comparaciones++
-		heap(lista, largo, i, s, channel)
+		HeapSortStats.evaluaciones++
+		HeapSortStats.comparaciones++
+		heap(lista, largo, i, channel)
 	}
 	for i := largo - 1; i > 0; i-- {
-		s.evaluaciones++
-		s.comparaciones++
-		s.intercambios += 2
+		HeapSortStats.evaluaciones++
+		HeapSortStats.comparaciones++
+		HeapSortStats.intercambios += 2
 		channel <- []int{0, i}
-		/*channel <- IndexValue{
-			index: i,
-			value: int(lista[0]),
-		}
-		channel <- IndexValue{
-			index: 0,
-			value: int(lista[i]),
-		}*/
 		lista[i], lista[0] = lista[0], lista[i]
-		heap(lista, i, 0, s, channel)
+		heap(lista, i, 0, channel)
 	}
-	fmt.Println("heap", lista)
-	close(channel)
 }
-func bubble(list *[]float64, s *stats, channel chan []int) {
+func bubble(list *[]float64, channel chan []int) {
 	lista := *list
 	largo := len(lista)
 	fmt.Println("largo ", largo)
 	for i := 0; i < largo-1; i++ { // Recorrer todos los elementos de la lista
 		// Encuentrar el elemento mínimo en la lista no ordenada
-		s.evaluaciones++
-		s.comparaciones++
+		bubbleStats.evaluaciones++
+		bubbleStats.comparaciones++
 		for j := 0; j < largo-i-1; j++ {
-			s.evaluaciones++
-			s.comparaciones += 2
+			bubbleStats.evaluaciones++
+			bubbleStats.comparaciones += 2
 			if lista[j] >= lista[j+1] {
-				s.intercambios += 2
+				bubbleStats.intercambios += 2
 				channel <- []int{j, j + 1}
-				/*channel <- IndexValue{
-					index: j+1,
-					value: int(lista[j]),
-				}*/
 				lista[j], lista[j+1] = lista[j+1], lista[j]
 			}
 		} // Intercambiar el elemento mínimo encontrado con el primer elemento
 	}
-	//fmt.Println(lista)
 }
-func selection(lista []float64, selChannel chan []int) {
-
+func selection(list *[]float64, selChannel chan []int) {
+	lista := *list
 	largo := len(lista)
 	for i := 0; i < largo; i++ { // Recorrer todos los elementos de la lista
 		selectionSortStats.evaluaciones++
@@ -467,27 +398,41 @@ func selection(lista []float64, selChannel chan []int) {
 			}
 		}
 		selChannel <- []int{i, min}
-		//fmt.Println("envia ", i, min)
-		/*channel <-IndexValue{
-			index: i,
-			value: int(lista[min]),
-		}
-		channel <- IndexValue{
-			index: min,
-			value: int(lista[i]),
-		}*/
 		temp := lista[min]
 		lista[min] = lista[i]
 		lista[i] = temp // Intercambiar el elemento mínimo encontrado con el primer elemento
-		//fmt.Println("Selection",lista)
 		selectionSortStats.intercambios += 1
 	}
-	//fmt.Println("Selection",lista)
-	close(selChannel)
 }
 
-func callBubble(list *[]float64, s *stats, channel chan []int) {
-	bubble(list, s, channel)
+func callBubble(list *[]float64, channel chan []int) {
+	iniciobubble := time.Now()
+	bubble(list, channel)
+	bubbleStats.tiempo = time.Since(iniciobubble)
+	close(channel)
+}
+func callQuickSort(list *[]float64, channel chan []int) {
+	inicioqs := time.Now()
+	quickSortIterative(list, 0, len(*list)-1, channel)
+	quickSortStats.tiempo = time.Since(inicioqs)
+	close(channel)
+}
+func callHeapSort(list *[]float64, channel chan []int) {
+	iniciohs := time.Now()
+	heapsort(list, channel)
+	HeapSortStats.tiempo = time.Since(iniciohs)
+	close(channel)
+}
+func callSelection(list *[]float64, channel chan []int) {
+	iniciosel := time.Now()
+	selection(list, channel)
+	selectionSortStats.tiempo = time.Since(iniciosel)
+	close(channel)
+}
+func callInsertion(list *[]float64, channel chan IndexValue) {
+	inicioins := time.Now()
+	insertion(*list, channel)
+	insertionSortStats.tiempo = time.Since(inicioins)
 	close(channel)
 }
 
@@ -580,5 +525,4 @@ func quickSortIterative(array *[]float64, l int, h int, channel chan []int) {
 			stack[top] = h
 		}
 	}
-	close(channel)
 }
