@@ -33,6 +33,7 @@ type stats struct {
 	comparaciones int
 	evaluaciones  int
 	tiempo        time.Duration
+	milisegundos  int64
 }
 
 const (
@@ -221,7 +222,7 @@ func heapsChartDrawer(slice []float64) {
 		m.Unlock()
 	}
 	heapsChart.Title = "HeapSort-Finalizado-" +
-		"Tiempo:" + strconv.FormatInt(HeapSortStats.tiempo.Milliseconds(), 10) + "ms-" +
+		"Tiempo:" + strconv.FormatInt(HeapSortStats.milisegundos, 10) + "ms-" +
 		"Swaps:" + strconv.Itoa(HeapSortStats.intercambios) + "-" +
 		"Comparaciones:" + strconv.Itoa(HeapSortStats.comparaciones) + "-" +
 		"Iteraciones:" + strconv.Itoa(HeapSortStats.evaluaciones)
@@ -321,8 +322,8 @@ func insertion(lista []float64, channel chan IndexValue) {
 		lista[j+1] = llave // Intercambiar el elemento mínimo encontrado con el primer elemento
 	}
 }
-func heap(lista []float64, n int, i int, channel chan []int) {
-
+func heap(list *[]float64, n int, i int, channel chan []int) {
+	lista := *list
 	largest := i
 	l := 2*i + 1
 	r := 2*i + 2
@@ -339,10 +340,10 @@ func heap(lista []float64, n int, i int, channel chan []int) {
 	}
 	HeapSortStats.comparaciones++
 	if largest != i {
-		HeapSortStats.intercambios += 2
+		HeapSortStats.intercambios++
 		channel <- []int{largest, i}
 		lista[i], lista[largest] = lista[largest], lista[i]
-		heap(lista, n, largest, channel)
+		heap(list, n, largest, channel)
 	}
 
 }
@@ -353,15 +354,15 @@ func heapsort(list *[]float64, channel chan []int) {
 	for i := largo/2 - 1; i >= 0; i-- {
 		HeapSortStats.evaluaciones++
 		HeapSortStats.comparaciones++
-		heap(lista, largo, i, channel)
+		heap(list, largo, i, channel)
 	}
 	for i := largo - 1; i > 0; i-- {
 		HeapSortStats.evaluaciones++
 		HeapSortStats.comparaciones++
-		HeapSortStats.intercambios += 2
+		HeapSortStats.intercambios++
 		channel <- []int{0, i}
 		lista[i], lista[0] = lista[0], lista[i]
-		heap(lista, i, 0, channel)
+		heap(list, i, 0, channel)
 	}
 }
 func bubble(list *[]float64, channel chan []int) {
@@ -376,7 +377,7 @@ func bubble(list *[]float64, channel chan []int) {
 			bubbleStats.evaluaciones++
 			bubbleStats.comparaciones += 2
 			if lista[j] >= lista[j+1] {
-				bubbleStats.intercambios += 2
+				bubbleStats.intercambios++
 				channel <- []int{j, j + 1}
 				lista[j], lista[j+1] = lista[j+1], lista[j]
 			}
@@ -401,38 +402,43 @@ func selection(list *[]float64, selChannel chan []int) {
 		temp := lista[min]
 		lista[min] = lista[i]
 		lista[i] = temp // Intercambiar el elemento mínimo encontrado con el primer elemento
-		selectionSortStats.intercambios += 1
+		selectionSortStats.intercambios++
 	}
 }
 
 func callBubble(list *[]float64, channel chan []int) {
 	iniciobubble := time.Now()
 	bubble(list, channel)
-	bubbleStats.tiempo = time.Since(iniciobubble)
+	time.Sleep(50 * time.Millisecond)
+	bubbleStats.tiempo = time.Since(iniciobubble) - (50 * time.Millisecond)
 	close(channel)
 }
 func callQuickSort(list *[]float64, channel chan []int) {
 	inicioqs := time.Now()
 	quickSortIterative(list, 0, len(*list)-1, channel)
-	quickSortStats.tiempo = time.Since(inicioqs)
+	time.Sleep(50 * time.Millisecond)
+	quickSortStats.tiempo = time.Since(inicioqs) - (50 * time.Millisecond)
 	close(channel)
 }
 func callHeapSort(list *[]float64, channel chan []int) {
-	iniciohs := time.Now()
+	iniciohs := time.Now().UnixMilli()
 	heapsort(list, channel)
-	HeapSortStats.tiempo = time.Since(iniciohs)
+	time.Sleep(50 * time.Millisecond)
+	HeapSortStats.milisegundos = time.Now().UnixMilli() - iniciohs
 	close(channel)
 }
 func callSelection(list *[]float64, channel chan []int) {
 	iniciosel := time.Now()
 	selection(list, channel)
-	selectionSortStats.tiempo = time.Since(iniciosel)
+	time.Sleep(50 * time.Millisecond)
+	selectionSortStats.tiempo = time.Since(iniciosel) - (50 * time.Millisecond)
 	close(channel)
 }
 func callInsertion(list *[]float64, channel chan IndexValue) {
 	inicioins := time.Now()
 	insertion(*list, channel)
-	insertionSortStats.tiempo = time.Since(inicioins)
+	time.Sleep(50 * time.Millisecond)
+	insertionSortStats.tiempo = time.Since(inicioins) - (50 * time.Millisecond)
 	close(channel)
 }
 
@@ -471,13 +477,18 @@ func partition(array *[]float64, l int, h int, channel chan []int) int {
 	x := arr[h]
 
 	for j := l; j <= h-1; j++ {
+		quickSortStats.evaluaciones++
+		quickSortStats.comparaciones++
 		if arr[j] <= x {
+			quickSortStats.comparaciones++
 			// increment index of smaller element
 			i = i + 1
 			channel <- []int{i, j}
 			arr[i], arr[j] = arr[j], arr[i]
+			quickSortStats.intercambios++
 		}
 	}
+	quickSortStats.intercambios++
 	channel <- []int{i + 1, h}
 	arr[i+1], arr[h] = arr[h], arr[i+1]
 	return i + 1
@@ -501,6 +512,7 @@ func quickSortIterative(array *[]float64, l int, h int, channel chan []int) {
 	// Keep popping from stack while is not empty
 	for top >= 0 {
 		// Pop h and l
+		quickSortStats.evaluaciones++
 		h = stack[top]
 		top = top - 1
 		l = stack[top]
@@ -510,6 +522,7 @@ func quickSortIterative(array *[]float64, l int, h int, channel chan []int) {
 		p := partition(array, l, h, channel)
 		// If there are elements on left side of pivot,
 		// then push left side to stack
+		quickSortStats.comparaciones++
 		if p-1 > l {
 			top = top + 1
 			stack[top] = l
@@ -518,6 +531,7 @@ func quickSortIterative(array *[]float64, l int, h int, channel chan []int) {
 		}
 		// If there are elements on right side of pivot,
 		// then push right side to stack
+		quickSortStats.comparaciones++
 		if p+1 < h {
 			top = top + 1
 			stack[top] = p + 1
