@@ -33,7 +33,6 @@ type stats struct {
 	comparaciones int
 	evaluaciones  int
 	tiempo        time.Duration
-	milisegundos  int64
 }
 
 const (
@@ -222,7 +221,7 @@ func heapsChartDrawer(slice []float64) {
 		m.Unlock()
 	}
 	heapsChart.Title = "HeapSort-Finalizado-" +
-		"Tiempo:" + strconv.FormatInt(HeapSortStats.milisegundos, 10) + "ms-" +
+		"Tiempo:" + strconv.FormatInt(HeapSortStats.tiempo.Milliseconds(), 10) + "ms-" +
 		"Swaps:" + strconv.Itoa(HeapSortStats.intercambios) + "-" +
 		"Comparaciones:" + strconv.Itoa(HeapSortStats.comparaciones) + "-" +
 		"Iteraciones:" + strconv.Itoa(HeapSortStats.evaluaciones)
@@ -239,7 +238,6 @@ func initBubblesChart(slice []float64) {
 	bubblesChart.SetRect(0, 0, width/2-1, height/3-3)
 	bubblesChart.BarWidth = BAR_WIDTH
 	bubblesChart.BarGap = 0
-	//bubblesChart.Labels = generateLabels(slice)
 	bubblesChart.LabelStyles = []ui.Style{ui.NewStyle(ui.ColorWhite)}
 	bubblesChart.BorderBottom = true
 	bubblesChart.BarColors = []ui.Color{ui.ColorRed}
@@ -252,7 +250,6 @@ func initInsertionsChart(slice []float64) {
 	insertionsChart.SetRect(0, height/3-3, width/2-1, height/3*2-4)
 	insertionsChart.BarWidth = BAR_WIDTH
 	insertionsChart.BarGap = 0
-	//insertionsChart.Labels = generateLabels(slice)
 	insertionsChart.LabelStyles = []ui.Style{ui.NewStyle(ui.ColorWhite)}
 	insertionsChart.BorderBottom = true
 	insertionsChart.BarColors = []ui.Color{ui.ColorCyan}
@@ -421,10 +418,10 @@ func callQuickSort(list *[]float64, channel chan []int) {
 	close(channel)
 }
 func callHeapSort(list *[]float64, channel chan []int) {
-	iniciohs := time.Now().UnixMilli()
+	iniciohs := time.Now()
 	heapsort(list, channel)
 	time.Sleep(50 * time.Millisecond)
-	HeapSortStats.milisegundos = time.Now().UnixMilli() - iniciohs
+	HeapSortStats.tiempo = time.Since(iniciohs) - (50 * time.Millisecond)
 	close(channel)
 }
 func callSelection(list *[]float64, channel chan []int) {
