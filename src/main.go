@@ -1,13 +1,18 @@
 /*
-VERSIÓN RECORTADA POR ITZ PARA OMITIR DETALLES ALGORÍTMICOS
+Código implementado en base a lo compartido por el profesor Ignacio Trejos
+creado por el estudiante Marcos Méndez
+
+Desarrollado por:
+David Hernández Calvo - 2020041924
+Alejandra González Fernández - 2020035049
+Esteban Ignacio Durán Vargas - 2020388144
 */
 
 /*
 Notas:
 1. Para una visualización correcta del gráfico de barras, por favor ejecutar el programa
 en una terminal a pantalla completa.
-https://www.geeksforgeeks.org/iterative-quick-sort/
-https://tecadmin.net/get-current-date-time-golang/
+
 */
 
 package main
@@ -410,6 +415,8 @@ func callBubble(list *[]float64, channel chan []int) {
 	bubbleStats.tiempo = time.Since(iniciobubble) - (50 * time.Millisecond)
 	close(channel)
 }
+
+// llamada auxiliar de quick sort
 func callQuickSort(list *[]float64, channel chan []int) {
 	inicioqs := time.Now()
 	quickSortIterative(list, 0, len(*list)-1, channel)
@@ -496,6 +503,10 @@ func partition(array *[]float64, l int, h int, channel chan []int) int {
 // l  --> Starting index,
 // h  --> Ending index
 
+/*
+El código fue tomado de la siguiente fuente:
+https://www.geeksforgeeks.org/iterative-quick-sort/
+*/
 func quickSortIterative(array *[]float64, l int, h int, channel chan []int) {
 	// Create an auxiliary stack
 	stack := make([]int, h-l+1)
