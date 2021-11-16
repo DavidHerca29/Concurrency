@@ -412,7 +412,8 @@ func callBubble(list *[]float64, channel chan []int) {
 	iniciobubble := time.Now()
 	bubble(list, channel)
 	time.Sleep(50 * time.Millisecond)
-	bubbleStats.tiempo = time.Since(iniciobubble) - (50 * time.Millisecond)
+	final := time.Since(iniciobubble) - (50 * time.Millisecond)
+	bubbleStats.tiempo = final
 	close(channel)
 }
 
@@ -421,28 +422,32 @@ func callQuickSort(list *[]float64, channel chan []int) {
 	inicioqs := time.Now()
 	quickSortIterative(list, 0, len(*list)-1, channel)
 	time.Sleep(50 * time.Millisecond)
-	quickSortStats.tiempo = time.Since(inicioqs) - (50 * time.Millisecond)
+	finalqs := time.Since(inicioqs) - (50 * time.Millisecond)
+	quickSortStats.tiempo = finalqs
 	close(channel)
 }
 func callHeapSort(list *[]float64, channel chan []int) {
 	iniciohs := time.Now()
 	heapsort(list, channel)
 	time.Sleep(50 * time.Millisecond)
-	HeapSortStats.tiempo = time.Since(iniciohs) - (50 * time.Millisecond)
+	finalhs := time.Since(iniciohs) - (50 * time.Millisecond)
+	HeapSortStats.tiempo = finalhs
 	close(channel)
 }
 func callSelection(list *[]float64, channel chan []int) {
 	iniciosel := time.Now()
 	selection(list, channel)
 	time.Sleep(50 * time.Millisecond)
-	selectionSortStats.tiempo = time.Since(iniciosel) - (50 * time.Millisecond)
+	finalsel := time.Since(iniciosel) - (50 * time.Millisecond)
+	selectionSortStats.tiempo = finalsel
 	close(channel)
 }
 func callInsertion(list *[]float64, channel chan IndexValue) {
 	inicioins := time.Now()
 	insertion(*list, channel)
 	time.Sleep(50 * time.Millisecond)
-	insertionSortStats.tiempo = time.Since(inicioins) - (50 * time.Millisecond)
+	finalIns := time.Since(inicioins) - (50 * time.Millisecond)
+	insertionSortStats.tiempo =finalIns
 	close(channel)
 }
 
